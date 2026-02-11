@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="QuickIdea - 3秒记录想法，0思考管理任务">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>QuickIdea - 快速想法管理</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <!-- 背景装饰 -->
+    <div class="bg-decoration"></div>
+
+    <!-- 主容器 -->
+    <div class="container">
+        <!-- 头部 -->
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">💡</span>
+                <h1>QuickIdea</h1>
+            </div>
+            <div class="header-actions">
+                <button id="notificationBtn" class="btn-icon" title="开启提醒">
+                    <span class="icon">🔔</span>
+                </button>
+                <button id="settingsBtn" class="btn-icon" title="设置">
+                    <span class="icon">⚙️</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- 快速输入区 -->
+        <section class="quick-input-section">
+            <div class="glass-card">
+                <h2 class="section-title">
+                    <span class="icon">✨</span>
+                    快速输入
+                </h2>
+                <form id="quickInputForm">
+                    <textarea id="ideaInput" class="idea-input"
+                        placeholder="记录你的想法、任务或灵感...&#10;提示：使用 #想法 #任务 #灵感 #待办 进行分类" rows="3"></textarea>
+
+                    <div class="input-actions">
+                        <div class="tag-buttons">
+                            <button type="button" class="tag-btn" data-tag="想法">#想法</button>
+                            <button type="button" class="tag-btn" data-tag="任务">#任务</button>
+                            <button type="button" class="tag-btn" data-tag="灵感">#灵感</button>
+                            <button type="button" class="tag-btn" data-tag="待办">#待办</button>
+                        </div>
+                        <button type="submit" class="btn-primary">
+                            <span class="icon">💾</span>
+                            保存
+                        </button>
+                    </div>
+                </form>
+
+                <!-- AI 分析提示（输入框下方） -->
+                <div id="aiPrompt" class="ai-prompt" style="display: none;">
+                    <div class="ai-prompt-content glass-card">
+                        <span class="icon">💡</span>
+                        <span class="ai-prompt-text">检测到灵感，需要 AI 帮你拆解吗？</span>
+                        <div class="ai-prompt-actions">
+                            <button id="aiAnalyzeBtn" class="btn-ai">✨ AI 智能拆解</button>
+                            <button id="aiSkipBtn" class="btn-text-small">📝 直接保存</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 任务统计 -->
+        <section class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-card glass-card">
+                    <div class="stat-value" id="totalCount">0</div>
+                    <div class="stat-label">总计</div>
+                </div>
+                <div class="stat-card glass-card">
+                    <div class="stat-value" id="todoCount">0</div>
+                    <div class="stat-label">待办</div>
+                </div>
+                <div class="stat-card glass-card">
+                    <div class="stat-value" id="completedCount">0</div>
+                    <div class="stat-label">已完成</div>
+                </div>
+                <div class="stat-card glass-card">
+                    <div class="stat-value" id="todayCount">0</div>
+                    <div class="stat-label">今日</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 筛选和搜索 -->
+        <section class="filter-section">
+            <div class="filter-controls">
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-filter="all">全部</button>
+                    <button class="filter-tab" data-filter="todo">待办</button>
+                    <button class="filter-tab" data-filter="completed">已完成</button>
+                    <button class="filter-tab" data-filter="today">今日</button>
+                </div>
+                <div class="search-box">
+                    <span class="icon">🔍</span>
+                    <input type="text" id="searchInput" placeholder="搜索...">
+                </div>
+            </div>
+        </section>
+
+        <!-- 任务列表 -->
+        <section class="tasks-section">
+            <div class="tasks-header">
+                <h2 class="section-title">
+                    <span class="icon">📋</span>
+                    我的任务
+                </h2>
+                <button id="clearCompletedBtn" class="btn-text">清除已完成</button>
+            </div>
+
+            <div id="tasksList" class="tasks-list">
+                <!-- 任务项将通过 JavaScript 动态生成 -->
+            </div>
+
+            <div id="emptyState" class="empty-state">
+                <div class="empty-icon">📝</div>
+                <p>还没有任务，快来添加第一个想法吧！</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- 设置面板（模态框） -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h2>设置</h2>
+                <button class="btn-close" id="closeSettingsBtn">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h3>通知设置</h3>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="morningNotification" checked>
+                            <span>晨间提醒（9:00）</span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="eveningNotification" checked>
+                            <span>晚间回顾（21:00）</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>🤖 AI 功能设置</h3>
+                    <div class="setting-item">
+                        <label>Gemini API Key</label>
+                        <input type="password" id="geminiApiKey" class="api-key-input"
+                            placeholder="输入你的 Gemini API Key">
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="help-link">
+                            获取 API Key →
+                        </a>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="autoAiPrompt" checked>
+                            <span>检测到 #灵感 标签时自动提示 AI 分析</span>
+                        </label>
+                    </div>
+                    <button id="testAiConnectionBtn" class="btn-secondary">测试 AI 连接</button>
+                </div>
+
+                <div class="settings-section">
+                    <h3>数据管理</h3>
+                    <button id="exportDataBtn" class="btn-secondary">导出数据</button>
+                    <button id="clearDataBtn" class="btn-danger">清除所有数据</button>
+                </div>
+
+                <div class="settings-section">
+                    <h3>关于</h3>
+                    <p class="about-text">
+                        QuickIdea v1.0<br>
+                        让想法捕捉像发微信一样简单
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI 分析结果模态框 -->
+    <div id="aiAnalysisModal" class="modal">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h2>🤖 AI 分析结果</h2>
+                <button class="btn-close" id="closeAnalysisBtn">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="analysisResult" class="analysis-result">
+                    <div class="analysis-loading">
+                        <div class="spinner"></div>
+                        <p>AI 正在分析中...</p>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button id="viewBreakdownBtn" class="btn-primary" style="display: none;">
+                        查看拆解方案
+                    </button>
+                    <button id="saveDirectBtn" class="btn-secondary">
+                        直接保存
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 任务拆解预览模态框 -->
+    <div id="breakdownModal" class="modal">
+        <div class="modal-content glass-card modal-large">
+            <div class="modal-header">
+                <h2>📋 任务拆解方案</h2>
+                <button class="btn-close" id="closeBreakdownBtn">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="breakdownResult" class="breakdown-result">
+                    <div class="breakdown-loading">
+                        <div class="spinner"></div>
+                        <p>AI 正在生成拆解方案...</p>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button id="confirmBreakdownBtn" class="btn-primary" style="display: none;">
+                        确认并保存
+                    </button>
+                    <button id="cancelBreakdownBtn" class="btn-secondary">
+                        取消
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 日历录入模态框 -->
+    <div id="calendarModal" class="modal">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h2>📅 录入日历</h2>
+                <button class="btn-close" id="closeCalendarBtn">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="calendar-info">
+                    <div class="info-row">
+                        <span class="info-label">任务：</span>
+                        <span id="calendarTaskName" class="info-value"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">建议完成日期：</span>
+                        <span id="calendarDueDate" class="info-value"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">距离现在：</span>
+                        <span id="calendarDaysUntil" class="info-value"></span>
+                    </div>
+                </div>
+
+                <div class="calendar-options">
+                    <h3>录入方式：</h3>
+                    <label class="radio-option">
+                        <input type="radio" name="calendarType" value="ical" checked>
+                        <span>📥 下载 iCal 文件（推荐）</span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="calendarType" value="google">
+                        <span>📆 Google Calendar（即将推出）</span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="calendarType" value="feishu">
+                        <span>📱 飞书日历（即将推出）</span>
+                    </label>
+                </div>
+
+                <div class="modal-actions">
+                    <button id="confirmCalendarBtn" class="btn-primary">
+                        确认录入
+                    </button>
+                    <button id="skipCalendarBtn" class="btn-secondary">
+                        跳过
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="expert-prompts.js"></script>
+    <script type="module" src="ai-assistant.js"></script>
+    <script type="module" src="ai-wizard.js"></script>
+    <script type="module" src="calendar-integration.js"></script>
+    <script src="app.js"></script>
+    <script src="notification.js"></script>
+</body>
+
+</html>
