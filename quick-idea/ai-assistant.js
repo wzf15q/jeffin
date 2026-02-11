@@ -6,9 +6,13 @@ import { ANALYSIS_PROMPT, BREAKDOWN_PROMPT, matchExpertRole, EXPERT_ROLES } from
 class AIAssistant {
     constructor() {
         this.apiKey = this.loadApiKey();
-        // 使用 v1beta API 和 Gemini Flash Latest 模型
-        this.apiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
-        this.enabled = !!this.apiKey;
+        // 默认代理地址 (用户部署后需替换此 URL)
+        this.proxyUrl = 'https://quick-idea-proxy.jeff-w-f15.workers.dev';
+        this.useProxy = true; // 默认开启代理模式
+        this.currentModel = localStorage.getItem('quickIdea_aiModel') || 'gemini';
+
+        // 直连模式配置
+        this.apiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
     }
 
     // 加载 API Key
@@ -20,16 +24,74 @@ class AIAssistant {
     saveApiKey(apiKey) {
         localStorage.setItem('quickIdea_geminiApiKey', apiKey);
         this.apiKey = apiKey;
-        this.enabled = !!apiKey;
+    }
+
+    // 切换模型
+    setModel(modelId) {
+        this.currentModel = modelId;
+        localStorage.setItem('quickIdea_aiModel', modelId);
+        console.log(`🤖 模型已切换为: ${modelId}`);
     }
 
     // 检查是否已配置
     isConfigured() {
-        return this.enabled;
+        // 代理模式下，默认认为已配置 (Key 在后端)
+        if (this.useProxy) return true;
+        return !!this.apiKey;
     }
 
-    // 调用 Gemini API
+    // 统一调用入口
     async callGemini(prompt) {
+        if (this.useProxy) {
+            return this.callProxy(prompt);
+        } else {
+            return this.callDirectGemini(prompt);
+        }
+    }
+
+    // 通过后端代理调用 (支持多模型)
+    async callProxy(prompt) {
+        if (!this.proxyUrl) {
+            throw new Error('未配置代理服务地址');
+        }
+
+        try {
+            console.log(`📡 通过代理调用 AI (${this.currentModel})...`);
+
+            const response = await fetch(this.proxyUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    prompt: prompt,
+                    model: this.currentModel
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `请求失败: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (!data.result) {
+                throw new Error('AI 返回数据为空');
+            }
+
+            return data.result;
+        } catch (error) {
+            console.error('API 代理调用失败:', error);
+            if (error.message.includes('Failed to fetch')) {
+                throw new Error('无法连接到 AI 代理服务器。请检查网络或 CORS 配置。');
+            }
+            throw error;
+        }
+    }
+
+    // 直接调用 Google Gemini API (旧模式)
+    async callDirectGemini(prompt) {
         if (!this.apiKey) {
             throw new Error('请先配置 Gemini API Key');
         }
@@ -85,11 +147,11 @@ class AIAssistant {
     // 分析任务
     async analyzeTask(userInput) {
         try {
+            // ... (保持原有逻辑，但 callGemini 会自动路由)
             const prompt = ANALYSIS_PROMPT(userInput);
             const response = await this.callGemini(prompt);
             const analysis = this.parseJsonResponse(response);
 
-            // 如果 AI 没有返回 expertRole，使用智能匹配
             if (!analysis.expertRole) {
                 analysis.expertRole = matchExpertRole(userInput, analysis.taskType);
             }
