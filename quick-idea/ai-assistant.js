@@ -7,7 +7,7 @@ class AIAssistant {
     constructor() {
         this.apiKey = this.loadApiKey();
         // 默认代理地址 (用户部署后需替换此 URL)
-        this.proxyUrl = 'https://quick-idea-proxy.jeff-w-f15.workers.dev';
+        this.proxyUrl = 'https://jeffin.vercel.app/api/ai-proxy';
         this.useProxy = true; // 默认开启代理模式
         this.currentModel = localStorage.getItem('quickIdea_aiModel') || 'gemini';
 
