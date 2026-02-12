@@ -29,16 +29,26 @@ class AIWorkflow {
 
     // 加载设置
     loadSettings() {
-        // 加载 API Key
+        // 加载 API Key (尽管现在已隐藏，但保留逻辑以防万一)
         const apiKey = localStorage.getItem('quickIdea_geminiApiKey');
         if (apiKey) {
-            document.getElementById('geminiApiKey').value = apiKey;
+            const apiKeyInput = document.getElementById('geminiApiKey');
+            if (apiKeyInput) apiKeyInput.value = apiKey;
+        }
+
+        // 加载 AI 模型选择
+        const aiModel = localStorage.getItem('quickIdea_aiModel') || 'gemini';
+        const modelSelect = document.getElementById('aiModelSelect');
+        if (modelSelect) {
+            modelSelect.value = aiModel;
+            this.aiAssistant.setModel(aiModel); // 初始化助手模型
         }
 
         // 加载自动提示设置
         const autoPrompt = localStorage.getItem('quickIdea_autoAiPrompt');
         if (autoPrompt !== null) {
-            document.getElementById('autoAiPrompt').checked = autoPrompt === 'true';
+            const autoPromptCheckbox = document.getElementById('autoAiPrompt');
+            if (autoPromptCheckbox) autoPromptCheckbox.checked = autoPrompt === 'true';
         }
     }
 
@@ -121,13 +131,31 @@ class AIWorkflow {
             this.addToCalendar();
         });
 
-        // 保存 API Key
-        document.getElementById('geminiApiKey').addEventListener('change', (e) => {
-            const apiKey = e.target.value.trim();
-            localStorage.setItem('quickIdea_geminiApiKey', apiKey);
-            aiAssistant.saveApiKey(apiKey);
-            console.log('💾 API Key 已保存');
-        });
+        // 保存 API Key (尽管现在已隐藏，但保留逻辑以防万一)
+        const apiKeyInput = document.getElementById('geminiApiKey');
+        if (apiKeyInput) {
+            apiKeyInput.addEventListener('change', (e) => {
+                const apiKey = e.target.value.trim();
+                localStorage.setItem('quickIdea_geminiApiKey', apiKey);
+                this.aiAssistant.saveApiKey(apiKey);
+                console.log('💾 API Key 已保存');
+            });
+        }
+
+        // AI 模型切换监听
+        const modelSelect = document.getElementById('aiModelSelect');
+        if (modelSelect) {
+            modelSelect.addEventListener('change', (e) => {
+                const modelId = e.target.value;
+                this.aiAssistant.setModel(modelId);
+                // 使用 toast 提示模型已切换
+                if (typeof this.showToast === 'function') {
+                    this.showToast(`AI 模型已切换为: ${modelId}`);
+                } else {
+                    console.log(`🤖 AI 模型已切换为: ${modelId}`);
+                }
+            });
+        }
 
         // 保存自动提示设置
         document.getElementById('autoAiPrompt').addEventListener('change', (e) => {

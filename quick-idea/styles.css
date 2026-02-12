@@ -1130,6 +1130,43 @@ body {
     box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
 }
 
+.settings-select {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-top: var(--spacing-xs);
+    margin-bottom: var(--spacing-xs);
+    transition: all var(--transition-base);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C2.185 5.355 2.403 5 2.736 5h9.528c.333 0 .552.355.287.658l-4.796 5.482a.406.406 0 0 1-.608 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: calc(100% - 12px) center;
+}
+
+.settings-select:focus {
+    outline: none;
+    border-color: var(--color-accent-primary);
+    background-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+}
+
+.settings-select option {
+    background: #1a1a2e;
+    color: white;
+}
+
+.setting-hint {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    margin-top: 4px;
+    margin-bottom: var(--spacing-sm);
+}
+
 .help-link {
     color: var(--color-accent-secondary);
     font-size: 0.75rem;
@@ -1211,6 +1248,7 @@ body {
         opacity: 0;
     }
 }
+
 /* ==========================================
    AI 向导样式
    ========================================== */
@@ -1355,7 +1393,7 @@ body {
     pointer-events: none;
 }
 
-.option-card input[type="radio"]:checked + .option-content {
+.option-card input[type="radio"]:checked+.option-content {
     border-left: 3px solid var(--color-accent-primary);
 }
 

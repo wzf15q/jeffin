@@ -160,12 +160,18 @@
                 <div class="settings-section">
                     <h3>🤖 AI 功能设置</h3>
                     <div class="setting-item">
-                        <label>Gemini API Key</label>
-                        <input type="password" id="geminiApiKey" class="api-key-input"
-                            placeholder="输入你的 Gemini API Key">
-                        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="help-link">
-                            获取 API Key →
-                        </a>
+                        <label for="aiModelSelect">选择 AI 模型</label>
+                        <select id="aiModelSelect" class="settings-select">
+                            <option value="gemini">Gemini 2.0 (全能)</option>
+                            <option value="deepseek">DeepSeek Chat (快速/中文强)</option>
+                            <option value="qwen">通义千问 Qwen (逻辑/中文强)</option>
+                        </select>
+                        <p class="setting-hint">AI 服务已内置，无需配置 Key 即可使用。</p>
+                    </div>
+                    <!-- 隐藏原始 Key 输入，保留 ID 以备不时之需或高级调试 -->
+                    <div class="setting-item" style="display: none;">
+                        <label>Gemini API Key (已内置模式)</label>
+                        <input type="password" id="geminiApiKey" class="api-key-input">
                     </div>
                     <div class="setting-item">
                         <label>
