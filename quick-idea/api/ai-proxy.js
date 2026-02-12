@@ -32,22 +32,31 @@ export default async function handler(request) {
         });
     }
 
+    // 助手函数：获取环境变量（不论大小写）
+    const getEnv = (key) => {
+        const upperKey = key.toUpperCase();
+        const lowerKey = key.toLowerCase();
+        // 尝试：DEEPSEEK_API_KEY, deepseek_api_key, Deepseek_api_key (通过 process.env 遍历)
+        return process.env[upperKey] || process.env[lowerKey] ||
+            Object.keys(process.env).find(k => k.toLowerCase() === lowerKey.toLowerCase()) && process.env[Object.keys(process.env).find(k => k.toLowerCase() === lowerKey.toLowerCase())];
+    };
+
     try {
-        const { prompt, model = process.env.DEFAULT_MODEL || 'gemini' } = await request.json();
+        const { prompt, model = getEnv('DEFAULT_MODEL') || 'gemini' } = await request.json();
 
         let result = "";
 
         // 2. 模型路由
         switch (model) {
             case 'deepseek':
-                result = await callDeepSeek(prompt, process.env.DEEPSEEK_API_KEY);
+                result = await callDeepSeek(prompt, getEnv('DEEPSEEK_API_KEY'));
                 break;
             case 'qwen':
-                result = await callQwen(prompt, process.env.QWEN_API_KEY);
+                result = await callQwen(prompt, getEnv('QWEN_API_KEY'));
                 break;
             case 'gemini':
             default:
-                result = await callGemini(prompt, process.env.GEMINI_API_KEY);
+                result = await callGemini(prompt, getEnv('GEMINI_API_KEY'));
                 break;
         }
 
