@@ -6,8 +6,13 @@ import { ANALYSIS_PROMPT, BREAKDOWN_PROMPT, matchExpertRole, EXPERT_ROLES } from
 class AIAssistant {
     constructor() {
         this.apiKey = this.loadApiKey();
-        // 默认代理地址 (用户部署后需替换此 URL)
-        this.proxyUrl = 'https://jeffin.vercel.app/api/ai-proxy';
+
+        // 自动探测代理地址
+        // 如果当前就在 Vercel 上运行，使用相对路径 /api/ai-proxy
+        // 否则使用硬编码的 Vercel 生产地址
+        const isVercel = window.location.hostname.includes('vercel.app');
+        this.proxyUrl = isVercel ? '/api/ai-proxy' : 'https://jeffin.vercel.app/api/ai-proxy';
+
         this.useProxy = true; // 默认开启代理模式
         this.currentModel = localStorage.getItem('quickIdea_aiModel') || 'gemini';
 

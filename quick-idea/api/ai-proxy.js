@@ -36,9 +36,8 @@ export default async function handler(request) {
     const getEnv = (key) => {
         const upperKey = key.toUpperCase();
         const lowerKey = key.toLowerCase();
-        // 尝试：DEEPSEEK_API_KEY, deepseek_api_key, Deepseek_api_key (通过 process.env 遍历)
-        return process.env[upperKey] || process.env[lowerKey] ||
-            Object.keys(process.env).find(k => k.toLowerCase() === lowerKey.toLowerCase()) && process.env[Object.keys(process.env).find(k => k.toLowerCase() === lowerKey.toLowerCase())];
+        // Edge Runtime 中直接访问变量名最稳妥
+        return process.env[upperKey] || process.env[lowerKey];
     };
 
     try {
