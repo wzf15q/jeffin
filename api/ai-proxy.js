@@ -43,6 +43,8 @@ export default async function handler(request) {
     try {
         const { prompt, model = getEnv('DEFAULT_MODEL') || 'gemini' } = await request.json();
 
+        console.log(`🤖 收到 AI 请求 | 模型: ${model} | Prompt 长度: ${prompt?.length || 0}`);
+
         let result = "";
 
         // 2. 模型路由

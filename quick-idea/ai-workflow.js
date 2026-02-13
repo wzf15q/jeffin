@@ -9,6 +9,7 @@ import { InteractiveAIWizard } from './ai-wizard.js';
 class AIWorkflow {
     constructor(app) {
         this.app = app;
+        this.aiAssistant = aiAssistant; // 保存 AI 助手实例，确保状态同步
         this.currentAnalysis = null;
         this.currentBreakdown = null;
         this.currentTask = null;
@@ -17,7 +18,7 @@ class AIWorkflow {
         this.autoAnalyzeTimer = null;
 
         // 初始化交互式 AI 向导
-        this.wizard = new InteractiveAIWizard(app, aiAssistant);
+        this.wizard = new InteractiveAIWizard(app, this.aiAssistant);
 
         this.init();
     }
