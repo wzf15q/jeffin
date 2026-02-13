@@ -288,6 +288,48 @@ class QuickIdeaApp {
         return filtered;
     }
 
+    // 渲染任务列表
+    renderTasks() {
+        const tasksList = document.getElementById('tasksList');
+        const emptyState = document.getElementById('emptyState');
+        if (!tasksList) return;
+
+        const filtered = this.getFilteredTasks();
+
+        if (filtered.length === 0) {
+            tasksList.innerHTML = '';
+            emptyState.style.display = 'block';
+            return;
+        }
+
+        emptyState.style.display = 'none';
+        tasksList.innerHTML = filtered.map(task => {
+            const date = new Date(task.createdAt);
+            const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return `
+                <div class="task-item ${task.completed ? 'completed' : ''}"
+                     data-task-id="${task.id}"
+                     data-tag="${task.tags.join(' ')}">
+                    <div class="task-time-tag">${timeStr}</div>
+                    <div class="task-checkbox-container">
+                        <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
+                    </div>
+                    <div class="task-content-container">
+                        <div class="task-content">${this.escapeHtml(task.content)}</div>
+                        <div class="task-tags">
+                            ${task.tags.map(tag => `<span class="tag">#${tag}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div class="task-actions">
+                        <button class="btn-delete" title="删除">
+                            <span class="icon">🗑️</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
     // 初始化微缩日历
     initMiniCalendar() {
         const miniCalendar = document.getElementById('miniCalendar');
