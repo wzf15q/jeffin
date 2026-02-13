@@ -202,22 +202,30 @@ class AIWorkflow {
     checkForAiPrompt() {
         const input = document.getElementById('ideaInput').value;
         const autoPrompt = document.getElementById('autoAiPrompt').checked;
-        const hasInspirationTag = input.includes('#灵感');
         const isConfigured = this.aiAssistant.isConfigured();
 
-        // 如果未开启自动提示，或者没有灵感标签，或者输入太短，则隐藏
-        if (!autoPrompt || !hasInspirationTag || input.trim().length <= 5) {
+        // 支持触发 AI 的标签列表
+        const aiTags = ['#想法', '#任务', '#灵感', '#待办'];
+        const matchedTag = aiTags.find(tag => input.includes(tag));
+
+        // 如果未开启自动提示，或者没有匹配到有效标签，或者输入太短，则隐藏
+        if (!autoPrompt || !matchedTag || input.trim().length <= 5) {
             this.hideAiPrompt();
             return;
         }
 
-        // 如果已配置且满足条件，显示提示条（不再自动启动向导）
+        // 如果已配置且满足条件，更新文案并显示提示条
         if (isConfigured) {
+            const promptLabel = document.getElementById('aiPromptLabel');
+            if (promptLabel) {
+                const tagName = matchedTag.substring(1); // 去掉 # 符号
+                promptLabel.textContent = `检测到${tagName}，需要 AI 帮你拆解吗？`;
+            }
             document.getElementById('aiPrompt').style.display = 'block';
         } else {
-            // 如果有 #灵感 但未配置，给出一次性通知
-            if (hasInspirationTag && !this.isNotifiedConfig) {
-                this.app.showNotification('检测到灵感标签，建议在设置中配置 AI 以获得最佳体验', 'info');
+            // 如果有标签但未配置，给出一次性通知
+            if (matchedTag && !this.isNotifiedConfig) {
+                this.app.showNotification(`检测到${matchedTag}标签，建议在设置中配置 AI 以获得最佳体验`, 'info');
                 this.isNotifiedConfig = true;
             }
         }
