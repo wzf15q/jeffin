@@ -1521,3 +1521,224 @@ body {
         padding: var(--spacing-md);
     }
 }
+
+/* ==========================================
+   混合动力展示系统样式
+   ========================================== */
+
+/* 今日焦点瓷砖 */
+.today-focus-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.today-focus-tile {
+    position: relative;
+    padding: var(--spacing-lg);
+    border: 1px solid rgba(108, 99, 255, 0.3);
+    background: linear-gradient(135deg, rgba(108, 99, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.today-focus-tile:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-accent-primary);
+    box-shadow: 0 8px 32px rgba(108, 99, 255, 0.2);
+}
+
+.today-focus-tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transform: skewX(-25deg);
+    transition: 0.5s;
+}
+
+.today-focus-tile:hover::before {
+    left: 150%;
+    transition: 0.8s;
+}
+
+.focus-label {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--color-accent-primary);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-sm);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.focus-content {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.focus-hint {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+}
+
+/* 微缩日历 */
+.timeline-nav-section {
+    margin-bottom: var(--spacing-lg);
+}
+
+.mini-calendar {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+    overflow-x: auto;
+    padding-bottom: var(--spacing-sm);
+}
+
+.calendar-day {
+    flex: 1;
+    min-width: 60px;
+    padding: var(--spacing-sm);
+    text-align: center;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.calendar-day:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--color-accent-primary);
+}
+
+.calendar-day.active {
+    background: var(--color-accent-primary);
+    border-color: var(--color-accent-primary);
+    color: white;
+}
+
+.day-name {
+    display: block;
+    font-size: 0.75rem;
+    opacity: 0.8;
+    margin-bottom: 2px;
+}
+
+.day-number {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+/* 智能时间轴核心 */
+.timeline-view .tasks-header {
+    margin-bottom: var(--spacing-xl);
+}
+
+.timeline-container {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-line {
+    position: absolute;
+    left: 7px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom,
+            var(--color-accent-primary) 0%,
+            var(--color-accent-secondary) 50%,
+            rgba(255, 255, 255, 0.1) 100%);
+    border-radius: 1px;
+}
+
+.timeline-view .task-item {
+    position: relative;
+    margin-bottom: var(--spacing-xl);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    transition: all var(--transition-base);
+}
+
+/* 时间轴节点 */
+.timeline-view .task-item::before {
+    content: '';
+    position: absolute;
+    left: -29px;
+    top: 20px;
+    width: 14px;
+    height: 14px;
+    background: var(--color-bg-primary);
+    border: 2px solid var(--color-accent-primary);
+    border-radius: 50%;
+    z-index: 2;
+    box-shadow: 0 0 10px rgba(108, 99, 255, 0.5);
+}
+
+/* 不同标签的特殊节点样式 */
+.timeline-view .task-item[data-tag*="灵感"]::before {
+    background: #ffcc00;
+    border-color: #ff9900;
+    box-shadow: 0 0 15px rgba(255, 204, 0, 0.8);
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    width: 18px;
+    height: 18px;
+    left: -31px;
+}
+
+.timeline-view .task-item[data-tag*="想法"]::before {
+    border-style: dashed;
+    background: transparent;
+}
+
+.timeline-view .task-item[data-tag*="任务"]::before {
+    border-radius: 4px;
+    background: var(--color-accent-secondary);
+}
+
+/* 时间点显示 */
+.task-time-tag {
+    position: absolute;
+    left: -100px;
+    top: 18px;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    font-weight: 600;
+    text-align: right;
+    width: 60px;
+}
+
+@media (max-width: 768px) {
+    .timeline-container {
+        padding-left: 20px;
+    }
+
+    .timeline-line {
+        left: 4px;
+    }
+
+    .timeline-view .task-item::before {
+        left: -22px;
+        width: 10px;
+        height: 10px;
+    }
+
+    .timeline-view .task-item[data-tag*="灵感"]::before {
+        left: -24px;
+        width: 14px;
+        height: 14px;
+    }
+
+    .task-time-tag {
+        display: none;
+        /* 移动端隐藏侧边时间 */
+    }
+}

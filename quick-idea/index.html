@@ -77,6 +77,13 @@
             </div>
         </section>
 
+        <!-- 今日焦点 -->
+        <section id="todayFocusSection" class="today-focus-section" style="display: none;">
+            <div id="todayFocusTile" class="today-focus-tile glass-card">
+                <!-- 由 AI 动态生成具体焦点任务 -->
+            </div>
+        </section>
+
         <!-- 任务统计 -->
         <section class="stats-section">
             <div class="stats-grid">
@@ -115,18 +122,28 @@
             </div>
         </section>
 
-        <!-- 任务列表 -->
-        <section class="tasks-section">
+        <!-- 微缩日历导航 -->
+        <section class="timeline-nav-section">
+            <div id="miniCalendar" class="mini-calendar">
+                <!-- 动态生成未来 7 天的日期 -->
+            </div>
+        </section>
+
+        <!-- 任务列表 (时间轴模式封装) -->
+        <section class="tasks-section timeline-view">
             <div class="tasks-header">
                 <h2 class="section-title">
-                    <span class="icon">📋</span>
-                    我的任务
+                    <span class="icon">⌛</span>
+                    时间流
                 </h2>
                 <button id="clearCompletedBtn" class="btn-text">清除已完成</button>
             </div>
 
-            <div id="tasksList" class="tasks-list">
-                <!-- 任务项将通过 JavaScript 动态生成 -->
+            <div class="timeline-container">
+                <div class="timeline-line"></div>
+                <div id="tasksList" class="tasks-list">
+                    <!-- 任务项将通过 JavaScript 动态生成 -->
+                </div>
             </div>
 
             <div id="emptyState" class="empty-state">

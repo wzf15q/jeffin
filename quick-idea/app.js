@@ -9,8 +9,10 @@ class QuickIdeaApp {
     init() {
         this.loadTasks();
         this.bindEvents();
+        this.initMiniCalendar();
         this.renderTasks();
         this.updateStats();
+        this.updateTodayFocus();
 
         // 初始化 AI 工作流（延迟加载以支持模块）
         this.initAIWorkflow();
@@ -148,6 +150,7 @@ class QuickIdeaApp {
         this.saveTasks();
         this.renderTasks();
         this.updateStats();
+        this.updateTodayFocus(); // 更新焦点
 
         // 清空输入框
         input.value = '';
@@ -174,6 +177,7 @@ class QuickIdeaApp {
         this.saveTasks();
         this.renderTasks();
         this.updateStats();
+        this.updateTodayFocus(); // 更新焦点
 
         this.showNotification('保存成功！', 'success');
 
@@ -222,6 +226,7 @@ class QuickIdeaApp {
             this.saveTasks();
             this.renderTasks();
             this.updateStats();
+            this.updateTodayFocus(); // 更新焦点
         }
     }
 
@@ -231,6 +236,7 @@ class QuickIdeaApp {
         this.saveTasks();
         this.renderTasks();
         this.updateStats();
+        this.updateTodayFocus(); // 更新焦点
         this.showNotification('已删除', 'success');
     }
 
@@ -282,43 +288,78 @@ class QuickIdeaApp {
         return filtered;
     }
 
-    // 渲染任务列表
-    renderTasks() {
-        const tasksList = document.getElementById('tasksList');
-        const emptyState = document.getElementById('emptyState');
-        const filtered = this.getFilteredTasks();
+    // 初始化微缩日历
+    initMiniCalendar() {
+        const miniCalendar = document.getElementById('miniCalendar');
+        if (!miniCalendar) return;
 
-        if (filtered.length === 0) {
-            tasksList.innerHTML = '';
-            emptyState.style.display = 'block';
-            return;
+        const days = [];
+        const now = new Date();
+        const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+
+        for (let i = 0; i < 7; i++) {
+            const date = new Date();
+            date.setDate(now.getDate() + i);
+            days.push({
+                name: i === 0 ? '今' : weekdays[date.getDay()],
+                number: date.getDate(),
+                fullDate: date.toDateString(),
+                active: i === 0
+            });
         }
 
-        emptyState.style.display = 'none';
-
-        tasksList.innerHTML = filtered.map(task => `
-            <div class="task-item ${task.completed ? 'completed' : ''}" data-task-id="${task.id}">
-                <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
-                <div class="task-body">
-                    <div class="task-content">${this.escapeHtml(task.content)}</div>
-                    <div class="task-meta">
-                        ${task.tags.length > 0 ? `
-                            <div class="task-tags">
-                                ${task.tags.map(tag => `
-                                    <span class="task-tag">#${tag}</span>
-                                `).join('')}
-                            </div>
-                        ` : ''}
-                        <span class="task-time">${this.formatTime(task.createdAt)}</span>
-                    </div>
-                </div>
-                <div class="task-actions">
-                    <button class="btn-delete">
-                        🗑️
-                    </button>
-                </div>
+        miniCalendar.innerHTML = days.map(day => `
+            <div class="calendar-day ${day.active ? 'active' : ''}" data-date="${day.fullDate}">
+                <span class="day-name">${day.name}</span>
+                <span class="day-number">${day.number}</span>
             </div>
         `).join('');
+
+        // 绑定点击事件
+        miniCalendar.querySelectorAll('.calendar-day').forEach(dayBtn => {
+            dayBtn.addEventListener('click', () => {
+                miniCalendar.querySelectorAll('.calendar-day').forEach(btn => btn.classList.remove('active'));
+                dayBtn.classList.add('active');
+                this.showNotification(`已切换到 ${dayBtn.dataset.date}`, 'info');
+            });
+        });
+    }
+
+    // 更新今日焦点磁贴
+    updateTodayFocus() {
+        const focusSection = document.getElementById('todayFocusSection');
+        const focusTile = document.getElementById('todayFocusTile');
+        if (!focusSection || !focusTile) return;
+
+        const focusTask = this.getFocusTask();
+
+        if (focusTask) {
+            focusSection.style.display = 'block';
+            const tagName = focusTask.tags[0] || '任务';
+            focusTile.innerHTML = `
+                <div class="focus-label">今日推荐焦点</div>
+                <div class="focus-content">${this.escapeHtml(focusTask.content)}</div>
+                <div class="focus-hint">✨ 这是目前最重要的${tagName}，建议现在开始</div>
+            `;
+
+            focusTile.onclick = () => {
+                const element = document.querySelector(`[data-task-id="${focusTask.id}"]`);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    element.classList.add('highlight-pulse');
+                    setTimeout(() => element.classList.remove('highlight-pulse'), 2000);
+                }
+            };
+        } else {
+            focusSection.style.display = 'none';
+        }
+    }
+
+    // 获取当前最重要的任务
+    getFocusTask() {
+        const pending = this.tasks.filter(t => !t.completed);
+        if (pending.length === 0) return null;
+        return pending.find(t => t.breakdown && t.breakdown.length > 0) || pending[0];
     }
 
     // 更新统计数据
@@ -443,9 +484,9 @@ class QuickIdeaApp {
         const days = Math.floor(diff / 86400000);
 
         if (minutes < 1) return '刚刚';
-        if (minutes < 60) return `${minutes}分钟前`;
-        if (hours < 24) return `${hours}小时前`;
-        if (days < 7) return `${days}天前`;
+        if (minutes < 60) return `${minutes} 分钟前`;
+        if (hours < 24) return `${hours} 小时前`;
+        if (days < 7) return `${days} 天前`;
 
         return date.toLocaleDateString('zh-CN', {
             month: 'short',
