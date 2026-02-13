@@ -10,12 +10,18 @@ export class InteractiveAIWizard {
 
     // 初始化 UI
     initUI() {
-        // 创建向导模态框
-        const modal = document.createElement('div');
-        modal.id = 'aiWizardModal';
-        modal.className = 'modal';
-        modal.innerHTML = `
-            <div class="modal-content wizard-content">
+        // 查找内联容器
+        const container = document.getElementById('aiWizardInlineContainer');
+        if (!container) {
+            console.warn('⚠️ 未找到 aiWizardInlineContainer，尝试在 body 中创建');
+        }
+
+        const wizardDiv = document.createElement('div');
+        wizardDiv.id = 'aiWizardPanel';
+        wizardDiv.className = 'wizard-inline-panel glass-card';
+        wizardDiv.style.display = 'none'; // 初始隐藏
+        wizardDiv.innerHTML = `
+            <div class="wizard-content">
                 <div class="wizard-header">
                     <h3 id="wizardTitle">📝 AI 智能拆解</h3>
                     <button class="close-btn" id="closeWizardBtn">×</button>
@@ -24,38 +30,41 @@ export class InteractiveAIWizard {
                     <div class="progress-bar">
                         <div class="progress-fill" id="wizardProgress"></div>
                     </div>
-                    <span class="progress-text" id="wizardProgressText">第 1 步</span>
                 </div>
                 <div class="wizard-context" id="wizardContext"></div>
                 <div class="wizard-body" id="wizardBody"></div>
                 <div class="wizard-actions">
-                    <button class="btn-secondary" id="wizardBackBtn" style="display: none;">
-                        ← 返回上一步
-                    </button>
-                    <button class="btn-secondary" id="wizardSaveBtn">
-                        💾 保存进度
-                    </button>
-                    <button class="btn-primary" id="wizardContinueBtn">
-                        继续拆解 →
-                    </button>
+                    <div class="wizard-actions-left">
+                        <button class="btn-text-small" id="wizardBackBtn" style="display: none;">
+                            ← 返回上一步
+                        </button>
+                    </div>
+                    <div class="wizard-actions-right">
+                        <button class="btn-secondary" id="wizardSaveBtn">
+                            💾 保存进度
+                        </button>
+                        <button class="btn-primary" id="wizardContinueBtn">
+                            继续拆解 →
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
-        document.body.appendChild(modal);
-        this.wizardModal = modal;
+
+        if (container) {
+            container.appendChild(wizardDiv);
+        } else {
+            document.body.appendChild(wizardDiv);
+        }
+
+        this.wizardPanel = wizardDiv;
 
         // 绑定事件
         document.getElementById('closeWizardBtn').addEventListener('click', () => this.closeWizard());
-        document.getElementById('wizardBackBtn').addEventListener('click', () => this.goBack());
+        const backBtn = document.getElementById('wizardBackBtn');
+        if (backBtn) backBtn.addEventListener('click', () => this.goBack());
         document.getElementById('wizardSaveBtn').addEventListener('click', () => this.saveProgress());
         document.getElementById('wizardContinueBtn').addEventListener('click', () => this.continueWizard());
-
-        // 点击模态框外部关闭
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                this.closeWizard();
-            }
-        });
     }
 
     // 开始新的向导会话
@@ -73,7 +82,11 @@ export class InteractiveAIWizard {
 
         // 显示加载状态
         this.showLoading();
-        this.wizardModal.classList.add('active');
+        this.wizardPanel.style.display = 'block';
+        this.wizardPanel.classList.add('active');
+
+        // 平滑滚动到向导面板
+        this.wizardPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
         try {
             // 获取第一步建议
@@ -163,7 +176,6 @@ export class InteractiveAIWizard {
 
         // 更新标题和进度
         document.getElementById('wizardTitle').textContent = `📝 AI 智能拆解 - 第 ${step} 步`;
-        document.getElementById('wizardProgressText').textContent = `第 ${step} 步`;
 
         // 更新进度条（假设最多 5 步）
         const progress = Math.min((step / 5) * 100, 100);
@@ -241,13 +253,14 @@ export class InteractiveAIWizard {
         const optionId = selectedOption.value;
         const option = this.currentStepData.options.find(opt => opt.id === optionId);
 
-        // 记录选择
+        // 记录选择并缓存当前的步骤建议，以便返回
         this.currentSession.history.push({
             step: this.currentSession.currentStep,
             question: this.currentStepData.question,
             optionId: optionId,
             selectedLabel: option.label,
-            selectedData: option
+            selectedData: option,
+            stepData: this.currentStepData // 缓存数据用于返回
         });
 
         this.currentSession.choices[this.currentStepData.question] = option.label;
@@ -274,15 +287,15 @@ export class InteractiveAIWizard {
 
     // 返回上一步
     goBack() {
-        if (this.currentSession.history.length === 0) return;
+        if (!this.currentSession || this.currentSession.history.length === 0) return;
 
-        // 移除最后一步
-        const lastStep = this.currentSession.history.pop();
-        delete this.currentSession.choices[lastStep.question];
+        // 弹出最后一步选择
+        const lastChoice = this.currentSession.history.pop();
+        delete this.currentSession.choices[lastChoice.question];
         this.currentSession.currentStep--;
 
-        // 重新获取上一步（简化处理，实际应该缓存）
-        this.app.showNotification('返回功能开发中...', 'info');
+        // 重新显示缓存的上一步内容，无需再次请求 AI
+        this.showWizardStep(lastChoice.stepData);
     }
 
     // 保存进度
@@ -346,8 +359,11 @@ export class InteractiveAIWizard {
 
     // 关闭向导
     closeWizard() {
-        this.wizardModal.classList.remove('active');
-        this.currentSession = null;
+        this.wizardPanel.classList.remove('active');
+        setTimeout(() => {
+            this.wizardPanel.style.display = 'none';
+            this.currentSession = null;
+        }, 300);
     }
 
     // 从已保存的任务继续

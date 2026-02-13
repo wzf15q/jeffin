@@ -69,20 +69,24 @@ class AIWorkflow {
             this.checkForAiPrompt();
         });
 
-        // AI 分析按钮
+        // AI 分析按钮监听（改为启动交互式向导）
         const aiAnalyzeBtn = document.getElementById('aiAnalyzeBtn');
         if (aiAnalyzeBtn) {
             aiAnalyzeBtn.addEventListener('click', () => {
-                this.startAiAnalysis();
+                const input = document.getElementById('ideaInput').value.trim();
+                console.log('✨ [AI-WORKFLOW] 点击按钮，启动向导');
+                this.hideAiPrompt();
+                this.wizard.startWizard(input); // 手动启动向导
             });
         }
 
-        // 跳过 AI 分析
+        // 跳过 AI 分析按钮
         const aiSkipBtn = document.getElementById('aiSkipBtn');
         if (aiSkipBtn) {
             aiSkipBtn.addEventListener('click', () => {
                 this.hideAiPrompt();
-                this.app.addTask();
+                // 仅隐藏提示，不执行保存（由保存按钮负责）
+                console.log('📝 [AI-WORKFLOW] 跳过 AI 拆解');
             });
         }
 
@@ -159,15 +163,29 @@ class AIWorkflow {
         }
 
         // 保存自动提示设置
-        document.getElementById('autoAiPrompt').addEventListener('change', (e) => {
-            localStorage.setItem('quickIdea_autoAiPrompt', e.target.checked);
-            console.log('💾 自动提示设置已保存:', e.target.checked);
-        });
+        const autoPromptInput = document.getElementById('autoAiPrompt');
+        if (autoPromptInput) {
+            autoPromptInput.addEventListener('change', (e) => {
+                const isChecked = e.target.checked;
+                localStorage.setItem('quickIdea_autoAiPrompt', isChecked);
+                console.log('💾 自动提示设置已保存:', isChecked);
+                // 如果关闭了自动提示，立即隐藏当前的 AI 提示条
+                if (!isChecked) this.hideAiPrompt();
+            });
+        }
+
+        const aiSkipBtnDuplicate = document.getElementById('aiSkipBtn');
+        if (aiSkipBtnDuplicate && aiSkipBtnDuplicate !== aiSkipBtn) {
+            // 已经在上方处理，此处仅为对齐原位置并移除冲突逻辑
+        }
 
         // 测试 AI 连接
-        document.getElementById('testAiConnectionBtn').addEventListener('click', () => {
-            this.testAiConnection();
-        });
+        const testBtn = document.getElementById('testAiConnectionBtn');
+        if (testBtn) {
+            testBtn.addEventListener('click', () => {
+                this.testAiConnection();
+            });
+        }
 
         // 点击模态框外部关闭
         const modals = ['aiAnalysisModal', 'breakdownModal', 'calendarModal'];
@@ -180,51 +198,27 @@ class AIWorkflow {
         });
     }
 
-    // 检查是否自动触发 AI 向导
+    // 检查是否显示 AI 提示
     checkForAiPrompt() {
         const input = document.getElementById('ideaInput').value;
         const autoPrompt = document.getElementById('autoAiPrompt').checked;
         const hasInspirationTag = input.includes('#灵感');
-        const isConfigured = aiAssistant.isConfigured();
+        const isConfigured = this.aiAssistant.isConfigured();
 
-        console.log('🔍 [AUTO-WIZARD] 检查自动触发条件:', {
-            input: input.substring(0, 30) + '...',
-            inputLength: input.length,
-            autoPrompt,
-            hasInspirationTag,
-            isConfigured
-        });
+        // 如果未开启自动提示，或者没有灵感标签，或者输入太短，则隐藏
+        if (!autoPrompt || !hasInspirationTag || input.trim().length <= 5) {
+            this.hideAiPrompt();
+            return;
+        }
 
-        // 如果启用自动提示、有灵感标签、已配置 API，且输入内容足够长
-        if (autoPrompt && hasInspirationTag && isConfigured && input.trim().length > 5) {
-            console.log('✅ [AUTO-WIZARD] 满足自动触发条件');
-
-            // 防止重复触发：检查是否已经在分析中或已分析过相同内容
-            if (!this.isAnalyzing && input !== this.lastAnalyzedInput) {
-                this.isAnalyzing = true;
-                this.lastAnalyzedInput = input;
-
-                console.log('🚀 [AUTO-WIZARD] 设置定时器，800ms 后自动启动向导');
-
-                // 延迟 800ms 自动触发，确保用户输入完成
-                clearTimeout(this.autoAnalyzeTimer);
-                this.autoAnalyzeTimer = setTimeout(() => {
-                    console.log('⚡ [AUTO-WIZARD] 定时器触发，启动交互式 AI 向导');
-                    // 启动交互式向导
-                    this.wizard.startWizard(input);
-                    // 重置状态
-                    this.isAnalyzing = false;
-                }, 800);
-            } else {
-                console.log('⏸️ [AUTO-WIZARD] 跳过触发（已在分析中或内容未变化）');
-            }
+        // 如果已配置且满足条件，显示提示条（不再自动启动向导）
+        if (isConfigured) {
+            document.getElementById('aiPrompt').style.display = 'block';
         } else {
-            console.log('❌ [AUTO-WIZARD] 不满足自动触发条件');
-
-            // 如果有 #灵感 但未配置 API Key，给出提示
-            if (hasInspirationTag && !isConfigured) {
-                console.warn('⚠️ [AUTO-WIZARD] 请先配置 Gemini API Key');
-                this.app.showNotification('请先在设置中配置 Gemini API Key', 'warning');
+            // 如果有 #灵感 但未配置，给出一次性通知
+            if (hasInspirationTag && !this.isNotifiedConfig) {
+                this.app.showNotification('检测到灵感标签，建议在设置中配置 AI 以获得最佳体验', 'info');
+                this.isNotifiedConfig = true;
             }
         }
     }
