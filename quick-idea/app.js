@@ -332,9 +332,9 @@ class QuickIdeaApp {
         if (!focusSection || !focusTile) return;
 
         const focusTask = this.getFocusTask();
+        focusSection.style.display = 'block';
 
         if (focusTask) {
-            focusSection.style.display = 'block';
             const tagName = focusTask.tags[0] || '任务';
             focusTile.innerHTML = `
                 <div class="focus-label">今日推荐焦点</div>
@@ -351,7 +351,11 @@ class QuickIdeaApp {
                 }
             };
         } else {
-            focusSection.style.display = 'none';
+            focusTile.innerHTML = `
+                <div class="focus-label" style="background: rgba(255,255,255,0.1); color: var(--color-text-secondary);">暂无推荐焦点</div>
+                <div class="focus-content" style="font-size: 0.9rem; opacity: 0.6;">添加带有 #灵感 的内容并完成 AI 拆解，系统将为您自动筛选焦点。</div>
+            `;
+            focusTile.onclick = null;
         }
     }
 
