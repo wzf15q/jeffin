@@ -26,6 +26,16 @@ class AIWorkflow {
     init() {
         this.bindEvents();
         this.loadSettings();
+
+        // 绑定模型回退通知回调
+        this.aiAssistant.onModelFallback = (failedModel, fallbackModel) => {
+            if (this.app && typeof this.app.showNotification === 'function') {
+                this.app.showNotification(
+                    `⚠️ ${failedModel} 配额超限，已自动降级至 ${fallbackModel} 处理`,
+                    'info'
+                );
+            }
+        };
     }
 
     // 加载设置

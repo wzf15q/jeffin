@@ -45,23 +45,65 @@ class AIAssistant {
         return !!this.apiKey;
     }
 
-    // 统一调用入口
+    // 统一调用入口，支持自动回退逻辑
     async callGemini(prompt) {
-        if (this.useProxy) {
-            return this.callProxy(prompt);
-        } else {
+        if (!this.useProxy) {
             return this.callDirectGemini(prompt);
         }
+
+        const models = ['gemini', 'deepseek', 'qwen'];
+        // 将当前选择的模型排在队列首位
+        const orderedModels = [
+            this.currentModel,
+            ...models.filter(m => m !== this.currentModel)
+        ];
+
+        let lastError = null;
+
+        for (let i = 0; i < orderedModels.length; i++) {
+            const model = orderedModels[i];
+            try {
+                return await this.callProxy(prompt, model);
+            } catch (error) {
+                lastError = error;
+                console.warn(`⚠️ 模型 ${model} 调用失败:`, error.message);
+
+                // 判断是否为配额限制或服务器不稳定，这类错误才触发回退
+                const canFallback =
+                    error.message.includes('429') ||
+                    error.message.includes('Quota') ||
+                    error.message.includes('quota') ||
+                    error.message.includes('500') ||
+                    error.message.includes('503') ||
+                    error.message.includes('limit');
+
+                if (canFallback && i < orderedModels.length - 1) {
+                    const nextModel = orderedModels[i + 1];
+                    console.log(`📡 正在尝试自动回退到备选模型: ${nextModel}`);
+
+                    // 触发通知回调（如果已绑定）
+                    if (this.onModelFallback) {
+                        this.onModelFallback(model, nextModel);
+                    }
+                    continue; // 尝试下一个模型
+                }
+                break; // 不可恢复的错误或队列耗尽，直接抛出
+            }
+        }
+
+        throw lastError;
     }
 
     // 通过后端代理调用 (支持多模型)
-    async callProxy(prompt) {
+    async callProxy(prompt, modelOverride = null) {
         if (!this.proxyUrl) {
             throw new Error('未配置代理服务地址');
         }
 
+        const targetModel = modelOverride || this.currentModel;
+
         try {
-            console.log(`📡 通过代理调用 AI (${this.currentModel})...`);
+            console.log(`📡 通过代理调用 AI (${targetModel})...`);
 
             const response = await fetch(this.proxyUrl, {
                 method: 'POST',
@@ -70,7 +112,7 @@ class AIAssistant {
                 },
                 body: JSON.stringify({
                     prompt: prompt,
-                    model: this.currentModel
+                    model: targetModel
                 })
             });
 
@@ -87,9 +129,8 @@ class AIAssistant {
 
             return data.result;
         } catch (error) {
-            console.error('API 代理调用失败:', error);
             if (error.message.includes('Failed to fetch')) {
-                throw new Error('无法连接到 AI 代理服务器。请检查网络或 CORS 配置。');
+                throw new Error('无法连接到 AI 代理服务器。请检查网络。');
             }
             throw error;
         }
